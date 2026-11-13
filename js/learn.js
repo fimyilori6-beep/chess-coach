@@ -1,0 +1,146 @@
+// Strategy lessons. Each one ends with a way to practice it.
+export const LESSONS = [
+  {
+    id: 'think', level: 'Start here', title: 'How to think on every move',
+    summary: 'A simple routine that removes most blunders.',
+    body: [
+      ['1. What did they just do?', 'Before thinking about your plan, ask what your opponent’s last move threatens. What does that piece attack now? What did it stop defending?'],
+      ['2. Checks, captures, threats (CCT)', 'List every check, capture and threat you have, in that order. Forcing moves come first because they limit your opponent’s replies. Then do the same for your opponent.'],
+      ['3. Pick a candidate, then blunder-check it', 'Before you let go of the piece, imagine it on the new square. Can it be captured? Did it leave something undefended? Does it allow a check?'],
+      ['4. No tactic? Improve your worst piece', 'If nothing is happening tactically, find your least active piece and give it a better square.'],
+    ],
+    practice: { type: 'play' },
+  },
+  {
+    id: 'opening', level: 'Beginner', title: 'Opening principles',
+    summary: 'You don’t need to memorize openings. Follow these rules.',
+    body: [
+      ['Control the center', 'Put pawns on e4/d4 (or e5/d5). Central pieces reach more squares and move to either side quickly.'],
+      ['Develop knights and bishops', 'Bring out a new minor piece nearly every move. Knights usually go before bishops (Nf3, Nc3).'],
+      ['Castle early', 'Castling gets your king safe and connects your rooks. Aim to castle within the first 10 moves.'],
+      ['Don’t bring the queen out early', 'Enemy pieces will chase it and gain time. Keep the queen home until your minor pieces are out.'],
+      ['Don’t move a piece twice', '…unless you’re winning material or have to. Every tempo counts in the opening.'],
+      ['Connect your rooks', 'Once your minors are out and you’ve castled, move the queen up a square so the rooks see each other. Your opening is done.'],
+    ],
+    practice: { type: 'play' },
+  },
+  {
+    id: 'values', level: 'Beginner', title: 'Piece values and trades',
+    summary: 'Know what you’re giving and getting.',
+    body: [
+      ['The scale', 'Pawn 1 · Knight 3 · Bishop 3 · Rook 5 · Queen 9. The king can’t be traded.'],
+      ['Count attackers and defenders', 'A piece is safe if it has at least as many defenders as attackers, and the cheapest attacker is worth more than it.'],
+      ['Trade when ahead', 'If you’re up material, trade pieces (not pawns). The fewer pieces on the board, the bigger your extra piece becomes.'],
+      ['Avoid trades when behind', 'Keep pieces on the board and look for complications and counterplay.'],
+      ['The bishop pair', 'Two bishops together are often worth a little more than bishop + knight, especially in open positions.'],
+    ],
+    practice: { type: 'puzzle', theme: 'hangingPiece' },
+  },
+  {
+    id: 'fork', level: 'Tactics', title: 'Forks',
+    summary: 'One piece, two targets.',
+    body: [
+      ['The idea', 'A fork attacks two or more pieces at once. Your opponent can only save one.'],
+      ['Knights are the kings of forks', 'Knights jump and attack pieces that can’t attack back. Watch for the king and queen being a knight’s move apart.'],
+      ['Pawn forks are cheap and deadly', 'A pawn attacking two pieces wins material almost every time.'],
+      ['Spot it', 'Look for two enemy pieces that are undefended or more valuable than your attacker. Is there a square that hits both?'],
+    ],
+    practice: { type: 'puzzle', theme: 'fork' },
+  },
+  {
+    id: 'pin', level: 'Tactics', title: 'Pins and skewers',
+    summary: 'Tactics along lines.',
+    body: [
+      ['Pin', 'A piece can’t (or shouldn’t) move because something more valuable sits behind it. Against the king, the pinned piece legally can’t move.'],
+      ['Exploit a pin', 'Attack the pinned piece again, ideally with a pawn. It can’t run.'],
+      ['Skewer', 'The reverse: the valuable piece is in front. When it moves, you take what’s behind.'],
+      ['Who does it', 'Only bishops, rooks and queens can pin or skewer. Look for enemy pieces lined up on a file, rank or diagonal.'],
+    ],
+    practice: { type: 'puzzle', theme: 'pin' },
+  },
+  {
+    id: 'discovered', level: 'Tactics', title: 'Discovered attacks',
+    summary: 'Move one piece, attack with another.',
+    body: [
+      ['The idea', 'When one of your pieces blocks your own rook, bishop or queen, moving it “discovers” an attack. That’s two threats in one move.'],
+      ['Discovered check', 'If the revealed attack is a check, the moving piece can go almost anywhere, even grab a queen, because they must answer the check first.'],
+      ['Double check', 'If both pieces give check, the king must move. Nothing can block or capture both.'],
+    ],
+    practice: { type: 'puzzle', theme: 'discoveredAttack' },
+  },
+  {
+    id: 'mates', level: 'Tactics', title: 'Checkmate patterns',
+    summary: 'Recognize mates and you’ll find them in seconds.',
+    body: [
+      ['Back-rank mate', 'A king behind its own unmoved pawns gets mated by a rook or queen on the back rank. Defend by giving your king “luft” (h3/h6).'],
+      ['Smothered mate', 'A knight mates a king surrounded by its own pieces. Classic: Qg8+ Rxg8 Nf7#.'],
+      ['Queen + support', 'A queen next to the enemy king, protected by another piece, is often mate. Look for Qxh7# or Qg7#.'],
+      ['Ladder mate', 'Two rooks (or rook + queen) take turns checking and push the king to the edge.'],
+    ],
+    practice: { type: 'puzzle', theme: 'mate' },
+  },
+  {
+    id: 'middlegame', level: 'Intermediate', title: 'Middlegame plans',
+    summary: 'What to do when there’s no tactic.',
+    body: [
+      ['Improve your worst piece', 'The simplest plan in chess. A bad bishop or a knight on the rim is a target for improvement.'],
+      ['Rooks on open files', 'Put rooks on files with no pawns. Then double them, or get one to the 7th rank.'],
+      ['Outposts', 'A square your opponent’s pawns can never attack, especially in their half, is a great home for a knight.'],
+      ['Pawn breaks', 'Look for a pawn move that challenges their pawn chain and opens lines for your pieces.'],
+      ['Attack where you’re stronger', 'Play on the side of the board where you have more space or more pieces.'],
+    ],
+    practice: { type: 'play' },
+  },
+  {
+    id: 'endgame', level: 'Intermediate', title: 'Endgame essentials',
+    summary: 'Win the won games.',
+    body: [
+      ['Activate your king', 'With queens off, the king is a fighting piece. March it to the center.'],
+      ['Passed pawns must be pushed', 'A pawn with no enemy pawns in front of it or on adjacent files is a huge asset. Escort it.'],
+      ['Rule of the square', 'Draw a square from the pawn to its promotion rank. If the enemy king can step into it, it catches the pawn.'],
+      ['Opposition', 'In king and pawn endings, the side NOT to move when the kings face each other with one square between usually wins the standoff.'],
+      ['Rooks behind passed pawns', 'Your own or your opponent’s, the rook belongs behind the passer.'],
+    ],
+    practice: { type: 'puzzle', theme: 'endgame' },
+  },
+  {
+    id: 'convert', level: 'Intermediate', title: 'Converting a winning position',
+    summary: 'Up a piece? Here’s how to finish.',
+    body: [
+      ['Simplify', 'Trade pieces, especially the queen, and keep your pawns. Every trade makes your extra material count more.'],
+      ['Kill counterplay first', 'Before you go for the win, take care of their threats. Being ahead means you can afford to be careful.'],
+      ['Make a passed pawn', 'In the end, extra material wins by promoting. Create a passer and push it.'],
+      ['Don’t rush', 'Most thrown games are lost by hurrying. Keep blunder-checking.'],
+    ],
+    practice: { type: 'play' },
+  },
+  {
+    id: 'improve', level: 'Study plan', title: 'How to actually improve',
+    summary: 'What works for most players under 1500.',
+    body: [
+      ['Tactics, tactics, tactics', 'At least half of your training should be puzzles at your level. Most games under 1500 are decided by tactics.'],
+      ['Play slower games', 'Blitz builds bad habits. Give yourself time to run your thinking routine every move.'],
+      ['Review every loss', 'Find your biggest mistake and ask what you missed. Your mistakes become puzzles here automatically, so drill them.'],
+      ['Fix your weakest theme', 'Your Progress page shows which tactic types trip you up the most. Train those on purpose.'],
+      ['Little and often', '15 minutes a day beats 3 hours once a week. Keep your streak going.'],
+    ],
+    practice: { type: 'puzzle', theme: 'any' },
+  },
+];
+
+export const DAILY_TIPS = [
+  'Before every move, ask: what is my opponent threatening?',
+  'Checks, captures, threats — look at forcing moves first, for both sides.',
+  'A knight on the rim is dim. Centralize your knights.',
+  'When you’re ahead in material, trade pieces, not pawns.',
+  'Rooks love open files and the 7th rank.',
+  'In the endgame, your king is a fighting piece. Use it!',
+  'If you see a good move, look for a better one.',
+  'Give your king an escape square (luft) to avoid back-rank mates.',
+  'Count attackers and defenders before you capture.',
+  'Passed pawns must be pushed.',
+  'Every pawn move is permanent. Pawns can’t go back.',
+  'The threat is often stronger than its execution.',
+  'Don’t bring your queen out early. It becomes a target.',
+  'Castle before move 10 in most games.',
+];
