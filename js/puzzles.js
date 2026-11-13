@@ -28,7 +28,17 @@ export class PuzzleMode {
     this.buildThemeSelect();
     this.bind();
     this.gen.start();
+    // Pick up an unfinished puzzle from last time
+    const cp = store.currentPuzzle;
+    if (cp?.p) this.load(cp.p, { recorded: cp.recorded });
   }
+
+  markRecorded() {
+    this.recorded = true;
+    if (store.currentPuzzle) { store.currentPuzzle.recorded = true; save(); }
+  }
+
+  clearCurrent() { store.currentPuzzle = null; save(); }
 
   buildThemeSelect() {
     const sel = $('#theme', this.root);
@@ -89,13 +99,16 @@ export class PuzzleMode {
     this.load(p);
   }
 
-  load(p) {
+  load(p, { recorded = false } = {}) {
     this.current = p;
     this.step = 0; // index into solution
     this.mistakes = 0;
     this.hintLevel = 0;
     this.finished = false;
-    this.recorded = false;
+    this.recorded = recorded;
+    this.ratingNote = null;
+    store.currentPuzzle = { p, recorded };
+    save();
     // remove from pool so it isn't served again (review puzzles stay until solved)
     if (p.source !== 'your-game') { store.pool = store.pool.filter((x) => x.id !== p.id); save(); }
     $('#p-explain', this.root).hidden = true;
@@ -192,7 +205,7 @@ export class PuzzleMode {
 
   fail(reason) {
     if (!this.recorded) {
-      this.recorded = true;
+      this.markRecorded();
       const delta = recordPuzzle(this.current, false);
       this.ratingNote = delta;
       this.onChange();
@@ -224,7 +237,7 @@ export class PuzzleMode {
     } else if (this.hintLevel === 2) {
       this.board.mark(new Map([[uci.slice(0, 2), 'hint']]));
       fb.innerHTML = `<p><b>Hint 2:</b> Move your <b>${NAME[piece.type]}</b> on ${uci.slice(0, 2)}.</p>`;
-      if (!this.recorded) { this.recorded = true; this.ratingNote = recordPuzzle(p, false); this.onChange(); }
+      if (!this.recorded) { this.markRecorded(); this.ratingNote = recordPuzzle(p, false); this.onChange(); }
     } else {
       this.board.arrows([{ orig: uci.slice(0, 2), dest: uci.slice(2, 4), brush: 'blue' }]);
       fb.innerHTML = `<p><b>Hint 3:</b> Play the arrow — then understand why it works.</p>`;
@@ -235,6 +248,7 @@ export class PuzzleMode {
   async showSolution() {
     const p = this.current;
     this.finished = true;
+    this.clearCurrent();
     if (this.game.fen() !== p.fen) {
       // rewind to the puzzle start
       this.game = new Chess(p.fen);
@@ -255,6 +269,7 @@ export class PuzzleMode {
   solve() {
     const p = this.current;
     this.finished = true;
+    this.clearCurrent();
     this.board.lock();
     if (!this.recorded) {
       this.recorded = true;

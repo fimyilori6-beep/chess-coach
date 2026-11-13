@@ -1,4 +1,6 @@
-// Local persistence: rating, history, puzzle pool, games. All in localStorage.
+// Local persistence: rating, history, puzzle pool, games, in-progress game.
+// Primary copy lives on disk in data/state.json (via server.py, this machine only);
+// localStorage is a backup so nothing is lost if the server isn't running.
 const KEY = 'chesscoach.v1';
 
 const fresh = () => ({
@@ -15,16 +17,38 @@ const fresh = () => ({
   settings: { level: 3, color: 'w', theme: 'any', coach: true },
 });
 
-let state;
-try { state = { ...fresh(), ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch { state = fresh(); }
+let local = null;
+try { local = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch { local = null; }
+
+let disk = null;
+export let diskSync = false; // true when data/state.json is reachable
+try {
+  const r = await fetch('/api/state', { cache: 'no-store' });
+  if (r.ok) { diskSync = true; disk = await r.json(); }
+} catch { diskSync = false; }
+
+// Prefer whichever copy was saved most recently
+const newest = [disk, local].filter(Boolean).sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0))[0];
+const state = { ...fresh(), ...(newest || {}) };
+state.settings = { ...fresh().settings, ...(state.settings || {}) };
 
 let saveTimer = null;
+function writeNow() {
+  state.savedAt = Date.now();
+  const body = JSON.stringify(state);
+  try { localStorage.setItem(KEY, body); } catch (e) { console.warn('local backup failed', e); }
+  if (diskSync) {
+    fetch('/api/state', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body, keepalive: body.length < 60000 })
+      .catch(() => {});
+  }
+}
 export function save() {
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { console.warn('save failed', e); }
-  }, 150);
+  saveTimer = setTimeout(writeNow, 300);
 }
+// Flush pending changes when the tab closes
+window.addEventListener('pagehide', () => { if (saveTimer) { clearTimeout(saveTimer); writeNow(); } });
+if (diskSync && !disk && local) save(); // first run with the server: copy browser data to disk
 
 export const store = state;
 
@@ -99,4 +123,10 @@ export function weakThemes(min = 3) {
     .sort((a, b) => a.rate - b.rate);
 }
 
-export function resetAll() { localStorage.removeItem(KEY); location.reload(); }
+export async function resetAll() {
+  localStorage.removeItem(KEY);
+  if (diskSync) {
+    await fetch('/api/state', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...fresh(), savedAt: Date.now() }) }).catch(() => {});
+  }
+  location.reload();
+}

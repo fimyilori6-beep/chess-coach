@@ -1,2 +1,5 @@
 .DS_Store
 *.log
+
+# Your personal progress (rating, games, puzzles) stays on this machine
+data/

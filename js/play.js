@@ -32,7 +32,8 @@ export class PlayMode {
     this.viewIndex = null;
     this.bind();
     this.renderLevel();
-    this.newGame();
+    if (store.currentGame?.records) this.resume(store.currentGame);
+    else this.newGame();
   }
 
   bind() {
@@ -66,24 +67,54 @@ export class PlayMode {
   newGame() {
     let color = store.settings.color;
     if (color === 'r') color = Math.random() < 0.5 ? 'w' : 'b';
+    this.start({ color, level: store.settings.level, records: [], hintsUsed: 0 });
+    $('#feedback', this.root).innerHTML = `<p class="muted">You’re playing ${colorName(color)} against <b>${LEVELS[this.level].name}</b>. ${color === 'w' ? 'Your move.' : 'The bot moves first.'}</p>`;
+  }
+
+  /** Start a game, either fresh or resumed from a saved one. */
+  start({ color, level, records, hintsUsed }) {
     this.color = color;
-    this.level = store.settings.level;
+    this.level = level;
     this.game = new Chess();
     this.records = []; // per-ply: { uci, san, color, cls, loss, text, best, fenBefore }
+    for (const r of records) {
+      try { this.game.move(uciToMove(r.uci)); this.records.push({ ...r }); } catch { break; }
+    }
     this.over = false;
-    this.hintsUsed = 0;
+    this.hintsUsed = hintsUsed || 0;
     this.viewIndex = null;
     this.bot.cancelAll();
     this.coach.cancelAll();
     $('#summary', this.root).hidden = true;
-    $('#feedback', this.root).innerHTML = `<p class="muted">You’re playing ${colorName(color)} against <b>${LEVELS[this.level].name}</b>. ${color === 'w' ? 'Your move.' : 'The bot moves first.'}</p>`;
     $('#tip', this.root).hidden = true;
+    $('#back-live', this.root).hidden = true;
     this.board.arrows([]);
-    this.board.sync(this.game, { movable: color, orientation: color });
+    const last = this.records[this.records.length - 1];
+    this.board.sync(this.game, { movable: color, orientation: color, lastMove: last ? [last.uci.slice(0, 2), last.uci.slice(2, 4)] : null });
     this.renderMoves();
     this.updateEval(0);
+    $('#status', this.root).textContent = this.game.turn() === color ? 'Your move' : 'Bot is thinking…';
+    this.persist();
     this.analyzeCurrent();
+    // Grade any moves that weren't finished before the reload
+    for (const r of this.records) if (r.color === color && !r.cls) { r.pending = true; this.grade(r); }
     if (this.game.turn() !== color) this.botMove();
+  }
+
+  resume(saved) {
+    this.start(saved);
+    const n = Math.ceil(this.records.length / 2);
+    $('#feedback', this.root).innerHTML = `<p class="muted">Welcome back. Your game vs <b>${LEVELS[this.level].name}</b> is restored at move ${n || 1}.</p>`;
+  }
+
+  /** Save the in-progress game so a reload (or closing the app) picks up where you left off. */
+  persist() {
+    if (this.over) { store.currentGame = null; save(); return; }
+    store.currentGame = {
+      color: this.color, level: this.level, hintsUsed: this.hintsUsed, t: Date.now(),
+      records: this.records.map(({ pending, ...r }) => r),
+    };
+    save();
   }
 
   /** Background analysis of the live position (feeds the eval bar + grading). */
@@ -129,6 +160,7 @@ export class PlayMode {
     try { move = this.game.move(uciToMove(uci)); } catch { this.board.sync(this.game, { movable: this.color }); return; }
     const rec = { uci, san: move.san, color: move.color, fenBefore, fenAfter: this.game.fen(), pending: true };
     this.records.push(rec);
+    this.persist();
     this.board.arrows([]);
     this.board.sync(this.game, { lastMove: [move.from, move.to] });
     this.renderMoves();
@@ -164,6 +196,7 @@ export class PlayMode {
       replyLine: after?.lines[0]?.pv || [], replyMate: after?.lines[0]?.mate, cls,
     });
     rec.pending = false;
+    if (this.records.includes(rec)) this.persist();
     // Your mistakes become review puzzles
     if ((cls === 'mistake' || cls === 'blunder') && best.score > 150) {
       const solution = [best.uci];
@@ -223,6 +256,7 @@ export class PlayMode {
     if (this.game.fen() !== fen || this.over) return;
     const move = this.game.move(uciToMove(uci));
     this.records.push({ uci, san: move.san, color: move.color, fenBefore: fen, fenAfter: this.game.fen(), bot: true });
+    this.persist();
     $('#status', this.root).textContent = 'Your move';
     if (this.viewIndex == null) this.board.sync(this.game, { movable: this.color, lastMove: [move.from, move.to] });
     this.renderMoves();
@@ -233,6 +267,7 @@ export class PlayMode {
   async hint() {
     if (this.over || this.game.turn() !== this.color) return;
     this.hintsUsed++;
+    this.persist();
     const a = await this.analysis(this.game.fen());
     if (!a?.best) return;
     this.board.arrows([{ orig: a.best.slice(0, 2), dest: a.best.slice(2, 4), brush: 'blue' }]);
@@ -248,6 +283,7 @@ export class PlayMode {
       this.game.undo();
       if (r.color === this.color) break;
     }
+    this.persist();
     this.view(null);
     this.board.arrows([]);
     $('#feedback', this.root).innerHTML = '<p class="muted">Move taken back. Take your time — checks, captures, threats.</p>';
@@ -269,6 +305,7 @@ export class PlayMode {
     if (this.over) return;
     if (result === 'resign') result = 'loss';
     this.over = true;
+    this.persist(); // clears the saved in-progress game
     this.board.lock();
     this.bot.cancelAll();
     const label = { win: 'You won.', loss: 'You lost.', draw: 'Draw.' }[result];

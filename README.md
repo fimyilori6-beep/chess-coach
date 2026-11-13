@@ -4,13 +4,18 @@ A personal chess trainer that runs entirely in the browser: **unlimited generate
 
 ## Run it
 
-It's a static site, but browsers won't start the chess engine (a Web Worker) from `file://`, so serve the folder:
-
 ```bash
-cd chess-coach && python3 -m http.server 3300
+python3 server.py
 ```
 
-Then open http://localhost:3300. Or double-click `start.command` on a Mac.
+Then open http://localhost:3300. Or double-click `start.command` on a Mac. You only need Python 3, no other dependencies.
+
+## Your data stays local
+
+`server.py` serves the app on `127.0.0.1` only and saves your progress to `data/state.json` next to the code. That covers your rating, puzzle history, games, mistakes to review, and any game or puzzle still in progress. `data/` is git-ignored, so it is never committed or pushed. A copy is also kept in the browser's `localStorage` as a backup, and whichever copy is newer wins on load.
+
+- **Back up or move your progress:** copy `data/state.json`.
+- **Start fresh:** Progress → *Reset all progress*, or delete `data/state.json`.
 
 ## What's inside
 
@@ -26,11 +31,10 @@ Then open http://localhost:3300. Or double-click `start.command` on a Mac.
 
 `js/generator.js` plays fast Stockfish-vs-Stockfish games from about 35 opening lines and slips in human-style mistakes. After each suspicious move it searches deeper. If the other side now has **exactly one** clearly winning move, that position becomes a puzzle. The solution is extended for as long as every move stays unique. `js/tactics.js` then tags the themes (fork, pin, skewer, discovered attack, back-rank mate, …), estimates difficulty, and writes the explanations.
 
-All progress is stored in your browser's `localStorage`.
-
 ## Structure
 
 ```
+server.py       local server + saves progress to data/state.json
 index.html      app shell
 styles.css      design (D.A.R.W.I.N. HUD language: forest glass, Newsreader + Geist)
 js/
