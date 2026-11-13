@@ -5,10 +5,13 @@ Serves the app and keeps your progress in data/state.json on this machine.
 Listens on 127.0.0.1 only, so nothing is reachable from other devices.
 The data/ folder is git-ignored and never leaves your computer.
 """
+import errno
 import json
 import os
 import sys
 import tempfile
+import urllib.request
+import webbrowser
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -70,7 +73,35 @@ class Handler(SimpleHTTPRequestHandler):
             super().log_message(fmt, *args)
 
 
+def already_running(port):
+    """True if Chess Coach itself is already serving on this port."""
+    try:
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/state", timeout=1) as r:
+            return r.status == 200
+    except Exception:
+        return False
+
+
 if __name__ == "__main__":
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 3300
-    print(f"Chess Coach running at http://localhost:{port}  (progress saved to data/state.json)")
-    ThreadingHTTPServer(("127.0.0.1", port), Handler).serve_forever()
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    open_browser = "--open" in sys.argv
+    port = int(args[0]) if args else 3300
+    url = f"http://localhost:{port}"
+    try:
+        server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    except OSError as e:
+        if e.errno == errno.EADDRINUSE and already_running(port):
+            print(f"Chess Coach is already running at {url} — opening it.")
+            webbrowser.open(url)
+            sys.exit(0)
+        if e.errno == errno.EADDRINUSE:
+            sys.exit(f"Port {port} is used by another program. Try: python3 server.py {port + 1}")
+        raise
+    print(f"Chess Coach running at {url}  (progress saved to data/state.json)")
+    print("Press Ctrl+C to stop.")
+    if open_browser:
+        webbrowser.open(url)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print("\nStopped. Your progress is saved.")
